@@ -1,0 +1,52 @@
+sources:
+  # Entertainment Industry Sources (RSS)
+  variety:
+    name: "Variety"
+    url: "https://variety.com/feed/"
+    type: "rss"
+    credibility: 0.90
+
+  deadline:
+    name: "Deadline Hollywood"
+    url: "https://deadline.com/feed/"
+    type: "rss"
+    credibility: 0.90
+
+  the_verge:
+    name: "The Verge"
+    url: "https://www.theverge.com/rss/index.xml"
+    type: "rss"
+    credibility: 0.90
+
+  techcrunch:
+    name: "TechCrunch"
+    url: "https://techcrunch.com/feed/"
+    type: "rss"
+    credibility: 0.85
+
+  indiewire:
+    name: "IndieWire"
+    url: "https://www.indiewire.com/feed/"
+    type: "rss"
+    credibility: 0.85
+
+  # World News Sources
+  bbc_world:
+    name: "BBC World News"
+    url: "https://feeds.bbci.co.uk/news/world/rss.xml"
+    type: "rss"
+    credibility: 0.95
+
+  reuters:
+    name: "Reuters"
+    url: "https://www.reutersagency.com/feed/"
+    type: "rss"
+    credibility: 0.95
+
+  # NYT API Source (requires API key)
+  nyt_api:
+    name: "New York Times"
+    type: "api"
+    api_type: "nyt"
+    sections: ["technology", "world"]
+    credibility: 0.95

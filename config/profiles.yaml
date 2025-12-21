@@ -1,0 +1,57 @@
+profiles:
+  career_news:
+    name: "Media & Entertainment Industry News"
+    description: "Weekly digest of streaming platforms, entertainment technology, and media industry developments"
+    keywords:
+      - streaming platforms
+      - Netflix
+      - Disney+
+      - HBO Max
+      - Warner Bros Discovery
+      - production technology
+      - studio mergers
+      - content distribution
+      - entertainment technology
+      - media tech
+      - box office
+      - theatrical releases
+    sources:
+      - variety
+      - deadline
+      - the_verge
+      - techcrunch
+      - indiewire
+    article_count: 10
+    max_articles_to_score: 50
+    schedule: "0 18 * * 0"  # Sunday 6 PM UTC
+    lookback_days: 7
+    max_per_cluster: 2
+    summary:
+      sentence_count: 2
+      instructions: "Focus on business impact and technology implications for the entertainment industry. Highlight strategic moves by major streaming platforms and production companies."
+
+  world_news:
+    name: "World News Digest"
+    description: "Weekly digest of significant international developments, policy changes, and global events"
+    keywords:
+      - international affairs
+      - major policy changes
+      - global economy
+      - significant world events
+      - diplomatic developments
+      - geopolitical
+      - international relations
+      - global security
+      - economic policy
+    sources:
+      - nyt_api
+      - bbc_world
+      - reuters
+    article_count: 10
+    max_articles_to_score: 50
+    schedule: "0 18 * * 0"  # Sunday 6 PM UTC
+    lookback_days: 7
+    max_per_cluster: 2
+    summary:
+      sentence_count: 3
+      instructions: "Provide balanced, factual summaries of international developments. Focus on the implications and context of major events."

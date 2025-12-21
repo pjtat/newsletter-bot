@@ -1,0 +1,33 @@
+# Rate Limiting and Cost Protection
+rate_limits:
+  # Maximum articles to process per profile (even if more are fetched)
+  max_articles_per_profile: 50
+
+  # Hard stop - total API calls across all profiles in single run
+  max_api_calls_per_run: 100
+
+  # Maximum API calls per article (scoring + summary)
+  max_api_calls_per_article: 2
+
+  # Timeout for individual API calls (seconds)
+  api_timeout_seconds: 30
+
+  # Maximum total runtime for entire process (seconds)
+  max_total_runtime_seconds: 600  # 10 minutes
+
+  # Cost warning threshold (dollars)
+  cost_warning_threshold: 5.00
+
+# Cost estimates for Claude Sonnet 4 (as of Dec 2024)
+# These are used for tracking and warnings, not billing
+cost_estimates:
+  # Per 1K tokens
+  input_per_1k_tokens: 0.003
+  output_per_1k_tokens: 0.015
+
+  # Conservative estimates for typical article scoring
+  avg_input_tokens_per_call: 800
+  avg_output_tokens_per_call: 200
+
+  # Estimated cost per API call (input + output)
+  estimated_cost_per_call: 0.018
