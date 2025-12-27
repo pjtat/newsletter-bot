@@ -1,5 +1,8 @@
 name: Generate News Digest
 
+permissions:
+    contents: write
+
 on:
   schedule:
     - cron: '0 9 * * 0'
