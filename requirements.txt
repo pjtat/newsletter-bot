@@ -15,3 +15,6 @@ requests==2.31.0
 
 # Environment Variables
 python-dotenv==1.0.0
+
+# Email Delivery
+sendgrid==6.11.0
