@@ -29,6 +29,7 @@ class Article:
     relevance_score: int = 0
     importance_score: int = 0
     topic_cluster: str = ""
+    is_most_popular: bool = False  # Flag for NYT Most Popular articles
     main_topic: str = ""
     reasoning: str = ""
 
@@ -54,9 +55,9 @@ class RSSCollector:
             cutoff_date = datetime.now(timezone.utc) - timedelta(days=lookback_days)
 
             for entry in feed.entries:
-                # Skip if already sent
-                if entry.link in self.sent_articles_set:
-                    continue
+                # Skip if already sent (DISABLED FOR TESTING)
+                # if entry.link in self.sent_articles_set:
+                #     continue
 
                 # Parse published date
                 published = self._parse_date(entry)
@@ -77,10 +78,20 @@ class RSSCollector:
                     continue
 
                 # Create article
+                title = entry.get('title', '')
+                summary = entry.get('summary', entry.get('description', ''))
+
+                # Skip articles with empty or very short content
+                if not title or len(title.strip()) < 10:
+                    continue
+                # DISABLED: summary length requirement for testing
+                # if not summary or len(summary.strip()) < 50:
+                #     continue
+
                 article = Article(
-                    title=entry.get('title', ''),
+                    title=title,
                     link=entry.link,
-                    summary=entry.get('summary', entry.get('description', '')),
+                    summary=summary,
                     published=published,
                     source_name=source_name
                 )
@@ -142,9 +153,10 @@ class NYTAPICollector:
         # NYT API date format: YYYYMMDD
         begin_date = cutoff_date.strftime('%Y%m%d')
 
+        # Simplified approach: just get recent articles without section filter
+        # The scorer will filter for relevance anyway
         params = {
             'api-key': self.api_key,
-            'fq': f'section_name:("{section}")',
             'begin_date': begin_date,
             'sort': 'newest',
             'page': 0
@@ -156,13 +168,21 @@ class NYTAPICollector:
             data = response.json()
 
             articles = []
-            docs = data.get('response', {}).get('docs', [])
+            response_data = data.get('response')
+            if not response_data:
+                return []
+
+            docs = response_data.get('docs')
+            if docs is None or not docs:
+                return []
 
             for doc in docs:
-                # Skip if already sent
+                # Skip if already sent (DISABLED FOR TESTING)
+                # url = doc.get('web_url', '')
+                # if url in self.sent_articles_set:
+                #     continue
+
                 url = doc.get('web_url', '')
-                if url in self.sent_articles_set:
-                    continue
 
                 # Parse date
                 pub_date_str = doc.get('pub_date', '')
@@ -179,10 +199,20 @@ class NYTAPICollector:
                     continue
 
                 # Create article
+                title = doc.get('headline', {}).get('main', '')
+                summary = doc.get('abstract', doc.get('lead_paragraph', ''))
+
+                # Skip articles with empty or very short content
+                if not title or len(title.strip()) < 10:
+                    continue
+                # DISABLED: summary length requirement for testing
+                # if not summary or len(summary.strip()) < 50:
+                #     continue
+
                 article = Article(
-                    title=doc.get('headline', {}).get('main', ''),
+                    title=title,
                     link=url,
-                    summary=doc.get('abstract', doc.get('lead_paragraph', '')),
+                    summary=summary,
                     published=published,
                     source_name=self.source_config['name']
                 )
@@ -192,6 +222,71 @@ class NYTAPICollector:
 
         except Exception as e:
             print(f"⚠️  Error fetching NYT API section {section}: {e}")
+            return []
+
+    def fetch_most_popular(self) -> List[Article]:
+        """Fetch most popular/viewed NYT articles from past 7 days."""
+        url = f"https://api.nytimes.com/svc/mostpopular/v2/viewed/7.json"
+        params = {'api-key': self.api_key}
+
+        # Get excluded sections from config
+        exclude_sections = self.source_config.get('exclude_sections', [])
+
+        try:
+            response = requests.get(url, params=params, timeout=10)
+            response.raise_for_status()
+            data = response.json()
+
+            articles = []
+            results = data.get('results', [])
+
+            for doc in results:
+                # Skip if already sent (DISABLED FOR TESTING)
+                # url = doc.get('url', '')
+                # if url in self.sent_articles_set:
+                #     continue
+
+                url = doc.get('url', '')
+
+                # Filter out excluded sections (lifestyle content)
+                section = doc.get('section', '')
+                if exclude_sections and section in exclude_sections:
+                    continue
+
+                # Parse date
+                pub_date_str = doc.get('published_date', '')
+                try:
+                    published = date_parser.parse(pub_date_str)
+                    if published.tzinfo is None:
+                        published = published.replace(tzinfo=timezone.utc)
+                except:
+                    continue
+
+                # Create article
+                title = doc.get('title', '')
+                summary = doc.get('abstract', '')
+
+                # Skip articles with empty or very short content
+                if not title or len(title.strip()) < 10:
+                    continue
+                # DISABLED: summary length requirement for testing
+                # if not summary or len(summary.strip()) < 50:
+                #     continue
+
+                article = Article(
+                    title=title,
+                    link=url,
+                    summary=summary,
+                    published=published,
+                    source_name=self.source_config['name'],
+                    is_most_popular=True
+                )
+                articles.append(article)
+
+            return articles
+
+        except Exception as e:
+            print(f"⚠️  Error fetching NYT Most Popular: {e}")
             return []
 
 
@@ -237,10 +332,16 @@ class ArticleCollector:
                     continue
 
                 collector = NYTAPICollector(self.nyt_api_key, source, self.sent_articles)
+
+                # Fetch both section articles and most popular
                 sections = source.get('sections', ['world'])
-                articles = collector.fetch(lookback_days, sections)
+                section_articles = collector.fetch(lookback_days, sections)
+                popular_articles = collector.fetch_most_popular()
+
+                # Combine and deduplicate
+                articles = section_articles + popular_articles
                 all_articles.extend(articles)
-                print(f"✓ Collected {len(articles)} articles from {source['name']}")
+                print(f"✓ Collected {len(articles)} articles from {source['name']} ({len(section_articles)} section + {len(popular_articles)} popular)")
 
         # Remove duplicate titles (95% similarity threshold)
         all_articles = self._deduplicate_by_title(all_articles)

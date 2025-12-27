@@ -1,52 +1,32 @@
 profiles:
   career_news:
     name: "Media & Entertainment Industry News"
-    description: "Weekly digest of streaming platforms, entertainment technology, and media industry developments"
-    keywords:
-      - streaming platforms
-      - Netflix
-      - Disney+
-      - HBO Max
-      - Warner Bros Discovery
-      - production technology
-      - studio mergers
-      - content distribution
-      - entertainment technology
-      - media tech
-      - box office
-      - theatrical releases
+    description: |
+      For a Product Manager in Production Operations at Netflix.
+
+      CRITICAL: Articles about Netflix or Netflix content (Stranger Things, Bridgerton, Squid Game, etc.) are HIGHEST PRIORITY.
+      Give these articles MAXIMUM relevance scores (90-100). Netflix is THE most important topic.
+
+      Priority ranking:
+      1. **NETFLIX** - Anything mentioning Netflix, Netflix shows/films, Netflix strategy, Netflix earnings, Netflix content, Netflix production, Netflix competitors' moves against Netflix (HIGHEST PRIORITY - score 90-100)
+      2. Netflix competitors (Disney+, Warner Bros Discovery, Amazon Prime Video, Apple TV+, Paramount+) - especially when compared to or competing with Netflix
+      3. Streaming industry trends that affect Netflix's competitive position
+      4. Media & entertainment industry trends (M&A, content deals, platform policies, editorial decisions)
+      5. Production/post-production insights (production designer insights, filmmaking techniques, operational processes)
+
+      ONLY include articles about the media & entertainment industry. Do NOT include general tech industry news unless it's specifically about streaming/entertainment companies.
+
+      Prefer articles from New York Times when available.
+    preferred_sources:
+      - New York Times
+
     sources:
       - variety
       - deadline
       - the_verge
-      - techcrunch
       - indiewire
-    article_count: 10
-    max_articles_to_score: 50
-    schedule: "0 18 * * 0"  # Sunday 6 PM UTC
-    lookback_days: 7
-    max_per_cluster: 2
-    summary:
-      sentence_count: 2
-      instructions: "Focus on business impact and technology implications for the entertainment industry. Highlight strategic moves by major streaming platforms and production companies."
-
-  world_news:
-    name: "World News Digest"
-    description: "Weekly digest of significant international developments, policy changes, and global events"
-    keywords:
-      - international affairs
-      - major policy changes
-      - global economy
-      - significant world events
-      - diplomatic developments
-      - geopolitical
-      - international relations
-      - global security
-      - economic policy
-    sources:
+      - hollywood_reporter
       - nyt_api
-      - bbc_world
-      - reuters
     article_count: 10
     max_articles_to_score: 50
     schedule: "0 18 * * 0"  # Sunday 6 PM UTC
@@ -54,4 +34,32 @@ profiles:
     max_per_cluster: 2
     summary:
       sentence_count: 3
-      instructions: "Provide balanced, factual summaries of international developments. Focus on the implications and context of major events."
+      instructions: "Provide clear, concise summaries focused on business impact and strategic implications for the entertainment industry. ALWAYS explicitly mention Netflix when the article discusses Netflix, Netflix content, or Netflix's competitive position. When relevant to the story, mention effects on technology, operations, or production—but only if genuinely applicable. Avoid forcing technical terms into non-technical stories. Keep language professional but natural."
+
+  world_news:
+    name: "World News Digest"
+    description: |
+      What are the MOST important things that happened this week that impact:
+      1. The United States (politics, economy, policy, major national developments)
+      2. The world (geopolitics, global economy, international conflicts, major global events)
+
+      Focus on truly significant news - events that shape markets, policy, and global stability. Avoid minor stories.
+
+    sources:
+      - nyt_world_mix
+      - bbc_world
+    article_count: 10
+    max_articles_to_score: 50
+    schedule: "0 18 * * 0"  # Sunday 6 PM UTC
+    lookback_days: 7
+    max_per_cluster: 2
+    min_relevance: 0  # No relevance filter - we want top 5 from each source regardless
+    min_per_source:
+      New York Times: 5
+      BBC World News: 5
+    max_per_source:
+      New York Times: 5
+      BBC World News: 5
+    summary:
+      sentence_count: 3
+      instructions: "Provide balanced summaries focused on economic and technology policy implications. Highlight how developments affect global business operations, technology sector, and international markets. Keep context clear and practical."

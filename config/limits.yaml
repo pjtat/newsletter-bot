@@ -4,7 +4,7 @@ rate_limits:
   max_articles_per_profile: 50
 
   # Hard stop - total API calls across all profiles in single run
-  max_api_calls_per_run: 100
+  max_api_calls_per_run: 220
 
   # Maximum API calls per article (scoring + summary)
   max_api_calls_per_article: 2
@@ -16,7 +16,7 @@ rate_limits:
   max_total_runtime_seconds: 600  # 10 minutes
 
   # Cost warning threshold (dollars)
-  cost_warning_threshold: 5.00
+  cost_warning_threshold: 4.00
 
 # Cost estimates for Claude Sonnet 4 (as of Dec 2024)
 # These are used for tracking and warnings, not billing

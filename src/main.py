@@ -123,10 +123,16 @@ def main():
             print("Step 3: Ranking and deduplicating...")
             max_articles = profile.get('article_count', 10)
             max_per_cluster = profile.get('max_per_cluster', 2)
+            min_relevance = profile.get('min_relevance', 40)
+            min_per_source = profile.get('min_per_source', None)
+            max_per_source = profile.get('max_per_source', None)
             selected_articles = ranker.rank_and_deduplicate(
                 scored_articles,
                 max_articles,
-                max_per_cluster
+                max_per_cluster,
+                min_relevance,
+                min_per_source,
+                max_per_source
             )
 
             if not selected_articles:

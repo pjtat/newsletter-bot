@@ -44,9 +44,14 @@ class LLMScorer:
         for i, article in enumerate(articles_to_score, 1):
             try:
                 self._check_rate_limit()
-                self._score_single_article(article, keywords, profile)
-                scored_articles.append(article)
-                print(f"  Scored {i}/{len(articles_to_score)}: {article.title[:60]}...")
+                success = self._score_single_article(article, keywords, profile)
+
+                # Only include successfully scored articles
+                if success:
+                    scored_articles.append(article)
+                    print(f"  Scored {i}/{len(articles_to_score)}: {article.title[:60]}...")
+                else:
+                    print(f"  ⚠️  Skipped article (scoring failed): {article.title[:60]}...")
 
             except RateLimitExceeded as e:
                 print(f"\n⚠️  {e}")
@@ -58,17 +63,49 @@ class LLMScorer:
 
         return scored_articles
 
-    def _score_single_article(self, article: Article, keywords: List[str], profile: Dict):
-        """Score a single article."""
+    def _score_single_article(self, article: Article, keywords: List[str], profile: Dict) -> bool:
+        """Score a single article. Returns True if successful, False otherwise."""
         # Build prompt
-        keywords_str = ", ".join(keywords)
+        profile_description = profile.get('description', 'a news digest')
+
+        # Check if this is from a preferred source
+        preferred_sources = profile.get('preferred_sources', [])
+        source_note = ""
+        if article.source_name in preferred_sources:
+            source_note = f"\n\n**NOTE: This article is from {article.source_name}, a PREFERRED SOURCE. Give it higher weight.**"
+
         prompt = f"""Analyze this article for a news digest.
 
+AUDIENCE & PURPOSE:
+{profile_description}
+
+ARTICLE:
 Title: {article.title}
 Summary: {article.summary}
-Source: {article.source_name}
+Source: {article.source_name}{source_note}
 
-Profile keywords: {keywords_str}
+SCORING INSTRUCTIONS:
+
+Relevance Score (how well it matches the audience's interests):
+- 90-100: Directly addresses their top priorities (see AUDIENCE above)
+- 70-89: Important to their industry/domain; includes INDIRECT impacts (e.g., tech industry news affects Netflix, media industry editorial decisions show industry trends)
+- 50-69: Related but not central
+- 30-49: Tangential connection
+- 0-29: Little to no relevance
+
+Importance Score (significance of the news itself):
+- 90-100: Major breaking news, game-changing developments, critical events
+- 70-89: Significant developments, important announcements, notable policy changes
+- 50-69: Moderate news value, incremental updates
+- 30-49: Minor updates, routine announcements
+- 0-29: Trivial news, minor updates
+
+CRITICAL REMINDERS:
+- **INDIRECT IMPACTS MATTER**: Tech industry policy/workforce issues affect Netflix. Media industry editorial decisions show industry trends. Platform content policies affect the streaming ecosystem.
+- **THINK BROADLY**: The audience cares about the full picture (read all their priorities above), not just direct mentions
+- **PREFERRED SOURCES GET BONUS**: When comparing similar articles, prefer NYT
+- **FILTER OUT**: Political gossip (salacious details, personal scandals without policy impact), celebrity gossip, minor product updates
+- **OPINION PIECES OK**: Keep opinion pieces if they have substantive policy analysis or business insights
 
 Respond with ONLY valid JSON (no markdown, no code blocks):
 {{
@@ -105,15 +142,19 @@ Respond with ONLY valid JSON (no markdown, no code blocks):
             article.topic_cluster = data.get('topic_cluster', '')
             article.reasoning = data.get('reasoning', '')
 
+            # Boost scores for NYT Most Popular articles
+            if article.is_most_popular:
+                article.relevance_score = min(100, article.relevance_score + 10)
+                article.importance_score = min(100, article.importance_score + 10)
+
             # Calculate final score
             article.score = (article.relevance_score * 0.6) + (article.importance_score * 0.4)
+            return True
 
         except json.JSONDecodeError as e:
             print(f"  ⚠️  Failed to parse JSON response: {e}")
-            # Set default values
-            article.relevance_score = 0
-            article.importance_score = 0
-            article.score = 0
+            # Don't include failed articles
+            return False
 
     def generate_summary(self, article: Article, profile: Dict) -> str:
         """Generate a summary for an article."""
