@@ -29,7 +29,7 @@ jobs:
           NYT_API_KEY: ${{ secrets.NYT_API_KEY }}
         run: |
           cd src
-          python main.py > ../digest_output.log 2>&1
+          python main.py > ../digest_output.log 2>&1 || true
           cat ../digest_output.log
 
       - name: Send digest emails
