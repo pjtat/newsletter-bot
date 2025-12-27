@@ -1,12 +1,12 @@
 name: Generate News Digest
 
 on:
-    # Scheduled: Every Sunday at 9 AM UTC
-    schedule:
-      - cron: '0 9 * * 0'
+  # Scheduled: Every Sunday at 9 AM UTC
+  schedule:
+    - cron: '0 9 * * 0'
 
-    # Allow manual trigger
-    workflow_dispatch:
+  # Allow manual trigger
+  workflow_dispatch:
 
 jobs:
   generate-digest:
@@ -37,8 +37,8 @@ jobs:
 
       - name: Send digest emails
         env:
-           SENDGRID_API_KEY: ${{ secrets.SENDGRID_API_KEY }}
-           RECIPIENT_EMAIL: ${{ secrets.RECIPIENT_EMAIL }}
+          SENDGRID_API_KEY: ${{ secrets.SENDGRID_API_KEY }}
+          RECIPIENT_EMAIL: ${{ secrets.RECIPIENT_EMAIL }}
         run: |
           # Send each generated digest as a separate email
           for digest in digests/*-$(date +%Y-%m-%d)-*.md; do
@@ -52,15 +52,8 @@ jobs:
         run: |
           git config --local user.email "action@github.com"
           git config --local user.name "GitHub Action"
-
-          # Extract stats from output
-          STATS=$(grep -A 3 "API Usage:" ../digest_output.log | tail -n 2 | tr '\n' ' ' || echo "Stats unavailable")
-
+          STATS=$(grep -A 3 "API Usage:" digest_output.log | tail -n 2 | tr '\n' ' ' || echo "Stats unavailable")
           git add digests/
           git add data/sent_articles.json
-          git diff --staged --quiet || git commit -m "Add weekly news digest [automated]
-
-$STATS
-
-  Generated on $(date -u +'%Y-%m-%d %H:%M:%S UTC')"
-            git push
+          git diff --staged --quiet || git commit -m "Add weekly news digest [automated] - $STATS - Generated on $(date -u +'%Y-%m-%d %H:%M:%S UTC')"
+          git push
