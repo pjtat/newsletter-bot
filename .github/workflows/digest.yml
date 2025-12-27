@@ -35,6 +35,19 @@ name: Generate News Digest
             python main.py > ../digest_output.log 2>&1
             cat ../digest_output.log
 
+        - name: Send digest emails
+          env:
+             SENDGRID_API_KEY: ${{ secrets.SENDGRID_API_KEY }}
+             RECIPIENT_EMAIL: ${{ secrets.RECIPIENT_EMAIL }}
+          run: |
+            # Send each generated digest as a separate email
+            for digest in digests/*-$(date +%Y-%m-%d)-*.md; do
+              if [ -f "$digest" ]; then
+                echo "Sending digest: $digest"
+                python src/email_sender.py "$digest" "$RECIPIENT_EMAIL"
+              fi
+            done
+
         - name: Commit and push changes
           run: |
             git config --local user.email "action@github.com"
