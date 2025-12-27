@@ -1,66 +1,66 @@
 name: Generate News Digest
 
-  on:
-    # Scheduled: Every Sunday at 6 PM UTC
+on:
+    # Scheduled: Every Sunday at 9 AM UTC
     schedule:
-      - cron: '0 18 * * 0'
+      - cron: '0 9 * * 0'
 
     # Allow manual trigger
     workflow_dispatch:
 
-  jobs:
-    generate-digest:
-      runs-on: ubuntu-latest
+jobs:
+  generate-digest:
+    runs-on: ubuntu-latest
 
-      steps:
-        - name: Checkout repository
-          uses: actions/checkout@v4
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
 
-        - name: Set up Python
-          uses: actions/setup-python@v4
-          with:
-            python-version: '3.11'
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.11'
 
-        - name: Install dependencies
-          run: |
-            python -m pip install --upgrade pip
-            pip install -r requirements.txt
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
 
-        - name: Generate digest
-          env:
-            ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
-            NYT_API_KEY: ${{ secrets.NYT_API_KEY }}
-          run: |
-            cd src
-            python main.py > ../digest_output.log 2>&1
-            cat ../digest_output.log
+      - name: Generate digest
+        env:
+          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+          NYT_API_KEY: ${{ secrets.NYT_API_KEY }}
+        run: |
+          cd src
+          python main.py > ../digest_output.log 2>&1
+          cat ../digest_output.log
 
-        - name: Send digest emails
-          env:
-             SENDGRID_API_KEY: ${{ secrets.SENDGRID_API_KEY }}
-             RECIPIENT_EMAIL: ${{ secrets.RECIPIENT_EMAIL }}
-          run: |
-            # Send each generated digest as a separate email
-            for digest in digests/*-$(date +%Y-%m-%d)-*.md; do
-              if [ -f "$digest" ]; then
-                echo "Sending digest: $digest"
-                python src/email_sender.py "$digest" "$RECIPIENT_EMAIL"
-              fi
-            done
+      - name: Send digest emails
+        env:
+           SENDGRID_API_KEY: ${{ secrets.SENDGRID_API_KEY }}
+           RECIPIENT_EMAIL: ${{ secrets.RECIPIENT_EMAIL }}
+        run: |
+          # Send each generated digest as a separate email
+          for digest in digests/*-$(date +%Y-%m-%d)-*.md; do
+            if [ -f "$digest" ]; then
+              echo "Sending digest: $digest"
+              python src/email_sender.py "$digest" "$RECIPIENT_EMAIL"
+            fi
+          done
 
-        - name: Commit and push changes
-          run: |
-            git config --local user.email "action@github.com"
-            git config --local user.name "GitHub Action"
+      - name: Commit and push changes
+        run: |
+          git config --local user.email "action@github.com"
+          git config --local user.name "GitHub Action"
 
-            # Extract stats from output
-            STATS=$(grep -A 3 "API Usage:" ../digest_output.log | tail -n 2 | tr '\n' ' ' || echo "Stats unavailable")
+          # Extract stats from output
+          STATS=$(grep -A 3 "API Usage:" ../digest_output.log | tail -n 2 | tr '\n' ' ' || echo "Stats unavailable")
 
-            git add digests/
-            git add data/sent_articles.json
-            git diff --staged --quiet || git commit -m "Add weekly news digest [automated]
+          git add digests/
+          git add data/sent_articles.json
+          git diff --staged --quiet || git commit -m "Add weekly news digest [automated]
 
-  $STATS
+$STATS
 
   Generated on $(date -u +'%Y-%m-%d %H:%M:%S UTC')"
             git push
