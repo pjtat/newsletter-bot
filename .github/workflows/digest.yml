@@ -41,8 +41,6 @@ jobs:
           RECIPIENT_EMAIL: ${{ secrets.RECIPIENT_EMAIL }}
           SENDGRID_FROM_EMAIL: ${{ secrets.SENDGRID_FROM_EMAIL }}
         run: |
-          echo "Looking for digests matching: digests/*-$(date +%Y-%m-%d)-*.md"
-          ls -la digests/ || echo "digests/ directory not found"
           for digest in digests/*-$(date +%Y-%m-%d)-*.md; do
             if [ -f "$digest" ]; then
               echo "Sending digest: $digest"
