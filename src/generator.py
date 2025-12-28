@@ -46,9 +46,18 @@ class MarkdownGenerator:
                 print(f"  ⚠️  Error generating summary: {e}")
                 article.generated_summary = article.summary[:200] + "..."
 
+        # Generate executive summary
+        print("\nGenerating executive summary...")
+        try:
+            executive_summary = self.scorer.generate_executive_summary(articles, profile)
+            print("  ✓ Executive summary generated")
+        except Exception as e:
+            print(f"  ⚠️  Error generating executive summary: {e}")
+            executive_summary = None
+
         # Build markdown
         date_str = datetime.now().strftime('%Y-%m-%d')
-        markdown = self._build_markdown(articles, profile, date_str)
+        markdown = self._build_markdown(articles, profile, date_str, executive_summary)
 
         # Create filename
         profile_slug = profile['name'].lower().replace(' ', '-').replace('&', 'and')
@@ -73,7 +82,7 @@ class MarkdownGenerator:
 
         return filepath
 
-    def _build_markdown(self, articles: List[Article], profile: Dict, date_str: str) -> str:
+    def _build_markdown(self, articles: List[Article], profile: Dict, date_str: str, executive_summary: str = None) -> str:
         """Build markdown content."""
         lines = []
 
@@ -91,6 +100,12 @@ class MarkdownGenerator:
         lines.append(f"# {profile['name']}")
         lines.append(date_range)
         lines.append("---\n")
+
+        # Executive summary (if available)
+        if executive_summary:
+            lines.append("## Executive Summary\n")
+            lines.append(f"{executive_summary}\n")
+            lines.append("---\n")
 
         # Articles
         for i, article in enumerate(articles, 1):

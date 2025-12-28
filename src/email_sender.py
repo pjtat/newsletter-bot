@@ -121,6 +121,25 @@ def convert_markdown_to_html(markdown_text: str) -> str:
             .read-more:hover {
                 text-decoration: underline;
             }
+            .executive-summary {
+                margin: 30px 0;
+                padding: 20px;
+                background: linear-gradient(135deg, #f6f8fa 0%, #e1e4e8 100%);
+                border-radius: 8px;
+                border-left: 5px solid #0366d6;
+            }
+            .executive-summary h2 {
+                color: #0366d6;
+                font-size: 18px;
+                margin: 0 0 15px 0;
+                font-weight: 600;
+            }
+            .executive-summary p {
+                color: #24292e;
+                font-size: 15px;
+                line-height: 1.7;
+                margin: 0;
+            }
             .footer {
                 margin-top: 40px;
                 padding-top: 20px;
@@ -138,6 +157,7 @@ def convert_markdown_to_html(markdown_text: str) -> str:
     """)
 
     in_article = False
+    in_executive_summary = False
     article_num = None
     current_article = {}
 
@@ -154,6 +174,20 @@ def convert_markdown_to_html(markdown_text: str) -> str:
         elif line.startswith('*Generated'):
             date = line.strip('*')
             html_parts.append(f'<div class="date">{date}</div></div>')
+
+        # Executive Summary section
+        elif line == '## Executive Summary' and not in_article:
+            html_parts.append('<div class="executive-summary"><h2>Executive Summary</h2>')
+            in_executive_summary = True
+
+        # Executive summary content (non-empty lines after the heading, before separator)
+        elif in_executive_summary and line and not line.startswith('---'):
+            html_parts.append(f'<p>{line}</p>')
+
+        # End of executive summary
+        elif in_executive_summary and line.startswith('---'):
+            html_parts.append('</div>')
+            in_executive_summary = False
 
         # Article number (## 1. Title)
         elif re.match(r'^## \d+\. ', line):

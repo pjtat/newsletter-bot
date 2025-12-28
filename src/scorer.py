@@ -192,6 +192,56 @@ Respond with ONLY the summary text (no introduction, no markdown)."""
             # Fallback to truncated original summary
             return article.summary[:200] + "..." if len(article.summary) > 200 else article.summary
 
+    def generate_executive_summary(self, articles: List[Article], profile: Dict) -> str:
+        """Generate an executive summary of all articles in the digest."""
+        self._check_rate_limit()
+
+        # Build article overview for the prompt
+        article_summaries = []
+        for i, article in enumerate(articles, 1):
+            article_summaries.append(
+                f"{i}. {article.title}\n"
+                f"   Topic: {article.main_topic}\n"
+                f"   Summary: {article.summary[:200]}..."
+            )
+
+        articles_text = "\n\n".join(article_summaries)
+        profile_name = profile.get('name', 'News Digest')
+
+        prompt = f"""You are creating an executive summary for a news digest called "{profile_name}".
+
+Below are the {len(articles)} articles selected for this week's digest. Generate a 4-6 sentence executive summary that:
+- Captures the overall themes and trends from these articles
+- Highlights what's "going on" in the news this week
+- Doesn't need to mention every article, but should represent the key stories and patterns
+- Is written in an engaging, journalistic style
+- Provides context and connections between stories where relevant
+
+ARTICLES:
+{articles_text}
+
+Respond with ONLY the executive summary text (no introduction, no markdown, no heading)."""
+
+        try:
+            response = self.client.messages.create(
+                model=self.model,
+                max_tokens=500,
+                temperature=0.7,
+                messages=[{
+                    "role": "user",
+                    "content": prompt
+                }],
+                timeout=self.timeout
+            )
+
+            self.api_calls_made += 1
+            return response.content[0].text.strip()
+
+        except Exception as e:
+            print(f"  ⚠️  Error generating executive summary: {e}")
+            # Fallback to simple description
+            return f"This week's digest covers {len(articles)} articles across topics including {', '.join(set(a.main_topic for a in articles[:3]))}."
+
     def _check_rate_limit(self):
         """Check if rate limit has been exceeded."""
         if self.api_calls_made >= self.max_calls:
