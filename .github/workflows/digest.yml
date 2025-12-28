@@ -39,6 +39,7 @@ jobs:
         env:
           SENDGRID_API_KEY: ${{ secrets.SENDGRID_API_KEY }}
           RECIPIENT_EMAIL: ${{ secrets.RECIPIENT_EMAIL }}
+          SENDGRID_FROM_EMAIL: ${{ secrets.SENDGRID_FROM_EMAIL }}
         run: |
           echo "Looking for digests matching: digests/*-$(date +%Y-%m-%d)-*.md"
           ls -la digests/ || echo "digests/ directory not found"
