@@ -49,22 +49,30 @@ class ArticleRanker:
         cluster_counts = defaultdict(int)
 
         if min_per_source:
-            # First, guarantee minimum from each specified source
+            # First, guarantee minimum from each specified source (while respecting cluster limits)
             source_counts = defaultdict(int)
             remaining = list(sorted_articles)
 
             for source_name, min_count in min_per_source.items():
                 source_articles = [a for a in remaining if a.source_name == source_name]
-                to_add = min(min_count, len(source_articles))
+                added_from_source = 0
 
-                for i in range(to_add):
-                    if source_articles[i] not in selected:
-                        selected.append(source_articles[i])
+                for article in source_articles:
+                    if added_from_source >= min_count:
+                        break
+
+                    cluster = article.topic_cluster or "uncategorized"
+                    # Respect cluster limits even for min_per_source
+                    if cluster_counts[cluster] < max_per_cluster:
+                        selected.append(article)
                         source_counts[source_name] += 1
-                        # Track cluster counts for articles we've already selected
-                        cluster = source_articles[i].topic_cluster or "uncategorized"
                         cluster_counts[cluster] += 1
-                        remaining.remove(source_articles[i])
+                        remaining.remove(article)
+                        added_from_source += 1
+
+                # Log if we couldn't meet the minimum due to cluster limits
+                if added_from_source < min_count:
+                    print(f"  Note: Only added {added_from_source}/{min_count} from {source_name} (cluster limits)")
 
             # Now use remaining slots for highest scoring articles
             sorted_articles = remaining

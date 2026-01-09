@@ -107,12 +107,18 @@ CRITICAL REMINDERS:
 - **FILTER OUT**: Political gossip (salacious details, personal scandals without policy impact), celebrity gossip, minor product updates
 - **OPINION PIECES OK**: Keep opinion pieces if they have substantive policy analysis or business insights
 
+CRITICAL CLUSTERING RULES:
+- Use BROAD topic clusters (1-2 words max): "venezuela", "israel-palestine", "ukraine-russia", "us-politics", "climate", "economy", "streaming-wars", "netflix"
+- Do NOT create sub-variants: use "venezuela" NOT "venezuela-regime-change" or "venezuela-political-crisis"
+- Similar stories = SAME cluster: All Venezuela coverage -> "venezuela", all Middle East conflict -> "middle-east", all Netflix news -> "netflix"
+- Think: "Would a newspaper put these in the same section?" If yes, same cluster.
+
 Respond with ONLY valid JSON (no markdown, no code blocks):
 {{
   "relevance_score": 0-100,
   "importance_score": 0-100,
   "main_topic": "2-4 word topic label",
-  "topic_cluster": "slug_like_this",
+  "topic_cluster": "broad_single_topic",
   "reasoning": "1-2 sentence explanation"
 }}"""
 
@@ -158,6 +164,11 @@ Respond with ONLY valid JSON (no markdown, no code blocks):
 
     def generate_summary(self, article: Article, profile: Dict) -> str:
         """Generate a summary for an article."""
+        # Check if article has meaningful content to summarize
+        summary_text = (article.summary or "").strip()
+        if not summary_text or len(summary_text) < 50:
+            return "No preview available."
+
         self._check_rate_limit()
 
         sentence_count = profile.get('summary', {}).get('sentence_count', 2)
@@ -189,7 +200,9 @@ Respond with ONLY the summary text (no introduction, no markdown)."""
 
         except Exception as e:
             print(f"  ⚠️  Error generating summary: {e}")
-            # Fallback to truncated original summary
+            # Fallback to truncated original summary (or no preview if too short)
+            if len(summary_text) < 50:
+                return "No preview available."
             return article.summary[:200] + "..." if len(article.summary) > 200 else article.summary
 
     def generate_executive_summary(self, articles: List[Article], profile: Dict) -> str:
