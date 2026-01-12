@@ -169,6 +169,36 @@ Respond with ONLY valid JSON (no markdown, no code blocks):
         if not summary_text or len(summary_text) < 50:
             return "No preview available."
 
+        # Check for placeholder/empty content patterns that indicate no real summary
+        no_content_patterns = [
+            "no summary available",
+            "no description available",
+            "no abstract available",
+            "no content available",
+            "summary not available",
+            "description not available",
+            "content not available",
+            "click to read",
+            "read more",
+            "continue reading",
+            "full story at",
+        ]
+        summary_lower = summary_text.lower()
+        if any(pattern in summary_lower for pattern in no_content_patterns):
+            return "No preview available."
+
+        # Check if summary is too similar to title (just a subtitle/tagline, not real content)
+        title_lower = article.title.lower()
+        # If summary is short and mostly overlaps with title, it's not useful
+        if len(summary_text) < 150:
+            # Check word overlap - if most words are from the title, skip
+            title_words = set(title_lower.split())
+            summary_words = set(summary_lower.split())
+            if title_words and summary_words:
+                overlap = len(title_words & summary_words) / len(summary_words)
+                if overlap > 0.7:  # 70%+ overlap means it's basically the title
+                    return "No preview available."
+
         self._check_rate_limit()
 
         sentence_count = profile.get('summary', {}).get('sentence_count', 2)
@@ -181,7 +211,7 @@ Content: {article.summary}
 
 Instructions: {instructions}
 
-Respond with ONLY the summary text (no introduction, no markdown)."""
+Respond with ONLY the summary text (no introduction, no markdown). If there is not enough content to summarize, respond with exactly: NO_CONTENT"""
 
         try:
             response = self.client.messages.create(
@@ -196,7 +226,34 @@ Respond with ONLY the summary text (no introduction, no markdown)."""
             )
 
             self.api_calls_made += 1
-            return response.content[0].text.strip()
+            generated = response.content[0].text.strip()
+
+            # Check if LLM indicated insufficient content
+            if generated == "NO_CONTENT":
+                return "No preview available."
+
+            # Check if LLM generated meta-commentary instead of a summary
+            meta_patterns = [
+                "i notice",
+                "i cannot",
+                "i can't",
+                "without the full",
+                "without access",
+                "only the title",
+                "not enough content",
+                "not enough information",
+                "insufficient content",
+                "insufficient information",
+                "to generate a summary",
+                "to create a summary",
+                "would need access",
+                "would need the full",
+            ]
+            generated_lower = generated.lower()
+            if any(pattern in generated_lower for pattern in meta_patterns):
+                return "No preview available."
+
+            return generated
 
         except Exception as e:
             print(f"  ⚠️  Error generating summary: {e}")

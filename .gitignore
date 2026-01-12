@@ -51,3 +51,6 @@ htmlcov/
 # Temporary files
 *.tmp
 temp/
+
+# Claude Code plans
+PLAN*.md

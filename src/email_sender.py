@@ -21,7 +21,12 @@ def convert_markdown_to_html(markdown_text: str) -> str:
     <head>
         <meta charset="utf-8">
         <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <meta name="color-scheme" content="light dark">
+        <meta name="supported-color-schemes" content="light dark">
         <style>
+            :root {
+                color-scheme: light dark;
+            }
             body {
                 font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
                 line-height: 1.6;
@@ -124,18 +129,18 @@ def convert_markdown_to_html(markdown_text: str) -> str:
             .executive-summary {
                 margin: 30px 0;
                 padding: 20px;
-                background: linear-gradient(135deg, #f6f8fa 0%, #e1e4e8 100%);
+                background-color: #1a4971;
                 border-radius: 8px;
-                border-left: 5px solid #0366d6;
+                border-left: 5px solid #58a6ff;
             }
             .executive-summary h2 {
-                color: #0366d6;
+                color: #ffffff;
                 font-size: 18px;
                 margin: 0 0 15px 0;
                 font-weight: 600;
             }
             .executive-summary p {
-                color: #24292e;
+                color: #ffffff;
                 font-size: 15px;
                 line-height: 1.7;
                 margin: 0;
@@ -168,21 +173,22 @@ def convert_markdown_to_html(markdown_text: str) -> str:
         # Main title
         if line.startswith('# ') and not in_article:
             title = line.replace('# ', '')
-            html_parts.append(f'<div class="header"><h1>{title}</h1>')
+            html_parts.append(f'<div class="header" style="border-bottom: 3px solid #0366d6; padding-bottom: 20px; margin-bottom: 30px;"><h1 style="color: #0366d6 !important; font-size: 28px; margin: 0 0 8px 0; font-weight: 600;">{title}</h1>')
 
         # Date line
         elif line.startswith('*Generated'):
             date = line.strip('*')
-            html_parts.append(f'<div class="date">{date}</div></div>')
+            html_parts.append(f'<div class="date" style="color: #586069 !important; font-size: 14px; font-style: italic;">{date}</div></div>')
 
         # Executive Summary section
         elif line == '## Executive Summary' and not in_article:
-            html_parts.append('<div class="executive-summary"><h2>Executive Summary</h2>')
+            html_parts.append('<div class="executive-summary" style="margin: 30px 0; padding: 20px; background-color: #1a4971; border-radius: 8px; border-left: 5px solid #58a6ff;">')
+            html_parts.append('<h2 style="color: #ffffff !important; font-size: 18px; margin: 0 0 15px 0; font-weight: 600;">Executive Summary</h2>')
             in_executive_summary = True
 
         # Executive summary content (non-empty lines after the heading, before separator)
         elif in_executive_summary and line and not line.startswith('---'):
-            html_parts.append(f'<p>{line}</p>')
+            html_parts.append(f'<p style="color: #ffffff !important; font-size: 15px; line-height: 1.7; margin: 0 0 10px 0;">{line}</p>')
 
         # End of executive summary
         elif in_executive_summary and line.startswith('---'):
@@ -233,7 +239,7 @@ def convert_markdown_to_html(markdown_text: str) -> str:
 
     # Footer
     html_parts.append("""
-        <div class="footer">
+        <div class="footer" style="margin-top: 40px; padding-top: 20px; border-top: 1px solid #e1e4e8; color: #586069 !important; font-size: 12px; text-align: center;">
             🤖 Generated with Claude Code
         </div>
     </body>
@@ -245,41 +251,41 @@ def convert_markdown_to_html(markdown_text: str) -> str:
 
 def format_article(article: dict) -> str:
     """Format a single article as HTML."""
-    html = ['<div class="article">']
+    html = ['<div class="article" style="margin-bottom: 35px; padding: 20px; background-color: #f6f8fa; border-radius: 6px; border-left: 4px solid #0366d6;">']
 
     # Title
-    html.append(f'<h2>{article.get("title", "")}</h2>')
+    html.append(f'<h2 style="color: #24292e !important; font-size: 20px; margin: 0 0 12px 0; font-weight: 600; line-height: 1.3;">{article.get("title", "")}</h2>')
 
     # Meta info
     meta = article.get('meta', {})
     if meta:
-        html.append('<div class="article-meta">')
+        html.append('<div class="article-meta" style="color: #586069 !important; font-size: 13px; margin-bottom: 8px;">')
         if 'source' in meta:
-            html.append(f'<span class="meta-item"><strong>Source:</strong> {meta["source"]}</span>')
+            html.append(f'<span class="meta-item" style="display: inline-block; margin-right: 15px; color: #586069 !important;"><strong>Source:</strong> {meta["source"]}</span>')
         if 'published' in meta:
             # Format date nicely
             pub = meta['published'].replace(' UTC', '').split(' ')[0]
-            html.append(f'<span class="meta-item"><strong>Published:</strong> {pub}</span>')
+            html.append(f'<span class="meta-item" style="display: inline-block; color: #586069 !important;"><strong>Published:</strong> {pub}</span>')
         html.append('</div>')
 
         # Scores
         if 'relevance' in meta and 'importance' in meta:
-            html.append('<div class="scores">')
-            html.append(f'<span class="score-badge relevance">Relevance: {meta["relevance"]}/100</span>')
-            html.append(f'<span class="score-badge importance">Importance: {meta["importance"]}/100</span>')
+            html.append('<div class="scores" style="margin: 10px 0; padding: 8px 12px; background-color: #fff; border-radius: 4px; font-size: 13px;">')
+            html.append(f'<span class="score-badge relevance" style="display: inline-block; padding: 2px 8px; border-radius: 3px; font-weight: 600; margin-right: 8px; background-color: #d1f0ff; color: #0366d6 !important;">Relevance: {meta["relevance"]}/100</span>')
+            html.append(f'<span class="score-badge importance" style="display: inline-block; padding: 2px 8px; border-radius: 3px; font-weight: 600; margin-right: 8px; background-color: #fff5b1; color: #735c0f !important;">Importance: {meta["importance"]}/100</span>')
             html.append('</div>')
 
         # Topic
         if 'topic' in meta:
-            html.append(f'<div class="topic">📌 {meta["topic"]}</div>')
+            html.append(f'<div class="topic" style="background-color: #f1f8ff; padding: 4px 10px; border-radius: 3px; font-size: 12px; color: #0366d6 !important; display: inline-block; margin: 8px 0; font-weight: 500;">📌 {meta["topic"]}</div>')
 
     # Summary
     if 'summary' in article:
-        html.append(f'<div class="summary">{article["summary"]}</div>')
+        html.append(f'<div class="summary" style="color: #24292e !important; font-size: 15px; line-height: 1.6; margin: 12px 0;">{article["summary"]}</div>')
 
     # Link
     if 'link' in article:
-        html.append(f'<a href="{article["link"]}" class="read-more">Read full article →</a>')
+        html.append(f'<a href="{article["link"]}" class="read-more" style="display: inline-block; margin-top: 12px; color: #0366d6 !important; text-decoration: none; font-weight: 500; font-size: 14px;">Read full article →</a>')
 
     html.append('</div>')
     return ''.join(html)

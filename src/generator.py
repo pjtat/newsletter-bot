@@ -44,7 +44,11 @@ class MarkdownGenerator:
                 print(f"  Generated summary {i}/{len(articles)}")
             except Exception as e:
                 print(f"  ⚠️  Error generating summary: {e}")
-                article.generated_summary = article.summary[:200] + "..."
+                summary_text = (article.summary or "").strip()
+                if len(summary_text) < 50:
+                    article.generated_summary = "No preview available."
+                else:
+                    article.generated_summary = article.summary[:200] + "..."
 
         # Generate executive summary
         print("\nGenerating executive summary...")
